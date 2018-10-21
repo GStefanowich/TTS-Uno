@@ -1,0 +1,589 @@
+<!-- Xml UI. See documentation: https://api.tabletopsimulator.com/ui/introUI/ -->
+<Defaults>
+    <Panel color="#DDDDDD" width="420" height="300" showAnimation="FadeIn" hideAnimation="FadeOut" animationDuration="0.50"></Panel>
+    <VerticalScrollView autoCalculateHeight="true" flexibleHeight="1" verticalScrollbarVisibility="AutoHideAndExpandViewport"></VerticalScrollView>
+    <Button preferredHeight="32"></Button>
+    <Row tooltipPosition="Left" tooltipBorderColor="black" tooltipBackgroundColor="black" tooltipTextColor="white"></Row>
+</Defaults>
+<!-- Turn Indicator -->
+<Text
+    id="turnIndicator"
+    text="It's your turn!"
+    color="#FF0000"
+    fontSize="34"
+    fontStyle="Bold"
+    alignment="UpperLeft"
+    offsetXY="90 -18"
+    visibility="Nobody"></Text>
+<!-- Color Selector UI -->
+<Panel
+    active="false"
+    id="colorSelectorBox"
+    rectAlignment="MiddleCenter"
+    allowDragging="false"
+    height="180"
+    color="">
+    <VerticalLayout padding="10" childForceExpandHeight="false">
+        <Text
+            alignment="MiddleCenter"
+            fontSize="24"
+            fontStyle="Bold"
+            color="white"
+            text="Select the new color."
+            shadow="black"></Text>
+            <HorizontalLayout padding="0" childForceExpandHeight="true">
+                <Button
+                    visibility = "Nobody"
+                    id="colorSelectorBlue"
+                    onClick="onColorSelect(Blue)"
+                    color="blue"
+                    padding="20"
+                    tooltip="Change the color to Blue"
+                    tooltipPosition="Below">
+                    <Text
+                        text="Blue"
+                        fontSize="30"
+                        alignment="LowerCenter"
+                        color="white"></Text>
+                </Button>
+                <Button
+                    visibility = "Nobody"
+                    id="colorSelectorCyan"
+                    onClick="onColorSelect(Cyan)"
+                    color="cyan"
+                    padding="20"
+                    textColor="black"
+                    tooltip="Change the color to Cyan"
+                    tooltipPosition="Below">
+                    <Text
+                        text="Cyan"
+                        fontSize="30"
+                        alignment="LowerCenter"
+                        color="black"></Text>
+                </Button>
+                <Button
+                    visibility = "Nobody"
+                    id="colorSelectorGreen"
+                    onClick="onColorSelect(Green)"
+                    color="green"
+                    padding="20"
+                    textColor="white"
+                    tooltip="Change the color to Green"
+                    tooltipPosition="Below">
+                    <Text
+                        text="Green"
+                        fontSize="30"
+                        alignment="LowerCenter"
+                        color="white"></Text>
+                </Button>
+                <Button
+                    visibility = "Nobody"
+                    id="colorSelectorOrange"
+                    onClick="onColorSelect(Orange)"
+                    color="orange"
+                    padding="20"
+                    textColor="white"
+                    tooltip="Change the color to Orange"
+                    tooltipPosition="Below">
+                    <Text
+                        text="Orange"
+                        fontSize="30"
+                        alignment="LowerCenter"
+                        color="white"></Text>
+                </Button>
+                <Button
+                    visibility = "Nobody"
+                    id="colorSelectorPurple"
+                    onClick="onColorSelect(Purple)"
+                    color="purple"
+                    padding="20"
+                    textColor="white"
+                    tooltip="Change the color to Purple"
+                    tooltipPosition="Below">
+                    <Text
+                        text="Purple"
+                        fontSize="30"
+                        alignment="LowerCenter"
+                        color="white"></Text>
+                </Button>
+                <Button
+                    visibility = "Nobody"
+                    id="colorSelectorRed"
+                    onClick="onColorSelect(Red)"
+                    color="red"
+                    padding="20"
+                    textColor="white"
+                    tooltip="Change the color to Red"
+                    tooltipPosition="Below">
+                    <Text
+                        text="Red"
+                        fontSize="30"
+                        alignment="LowerCenter"
+                        color="white"></Text>
+                </Button>
+            </HorizontalLayout>
+    </VerticalLayout>
+</Panel>
+<!-- Player Selector UI -->
+<Panel
+    active="false"
+    visibility = "Nobody"
+    id="tradePlayersBox"
+    rectAlignment="MiddleCenter"
+    allowDragging="false"
+    color="">
+    <VerticalLayout padding="0" childForceExpandHeight="false">
+        <Text
+            alignment="MiddleCenter"
+            fontSize="24"
+            fontStyle="Bold"
+            color="white"
+            text="Select Player To Trade Cards With"
+            shadow="black"
+            height="36"></Text>
+            <VerticalLayout padding="0" childForceExpandHeight="true">
+                <Button
+                    id="seatIdentityWhite"
+                    color="White"
+                    text="Nobody"
+                    fontSize="22"
+                    onClick="onPlayerSelect">
+                </Button>
+                <Button
+                    id="seatIdentityRed"
+                    color="Red"
+                    text="Nobody"
+                    fontSize="22"
+                    onClick="onPlayerSelect">
+                </Button>
+                <Button
+                    id="seatIdentityOrange"
+                    color="Orange"
+                    text="Nobody"
+                    fontSize="22"
+                    onClick="onPlayerSelect">
+                </Button>
+                <Button
+                    id="seatIdentityYellow"
+                    color="Yellow"
+                    text="Nobody"
+                    fontSize="22"
+                    onClick="onPlayerSelect">
+                </Button>
+                <Button
+                    id="seatIdentityGreen"
+                    color="Green"
+                    text="Nobody"
+                    fontSize="22"
+                    onClick="onPlayerSelect">
+                </Button>
+                <Button
+                    id="seatIdentityBlue"
+                    color="Blue"
+                    text="Nobody"
+                    fontSize="22"
+                    onClick="onPlayerSelect">
+                </Button>
+                <Button
+                    id="seatIdentityPurple"
+                    color="Purple"
+                    text="Nobody"
+                    fontSize="22"
+                    onClick="onPlayerSelect">
+                </Button>
+                <Button
+                    id="seatIdentityPink"
+                    color="Pink"
+                    text="Nobody"
+                    fontSize="22"
+                    onClick="onPlayerSelect">
+                </Button>
+            </VerticalLayout>
+    </VerticalLayout>
+</Panel>
+<!-- Game Options UI -->
+<Panel
+    width="340"
+    height="300"
+    rectAlignment="LowerRight"
+    offsetXY="-25 90"
+    allowDragging="true"
+    returnToOriginalPositionWhenReleased="false"
+    visibility="White|Red|Orange|Yellow|Green|Blue|Purple|Pink|Host|Promoted">
+    <VerticalLayout padding="0" childForceExpandHeight="false">
+        <HorizontalLayout padding="0" childForceExpandHeight="false" height="30"
+            visibility="White|Red|Orange|Yellow|Green|Blue|Purple|Pink">
+            <Button
+                id="drawButton"
+                text="New Game"
+                onClick="onUIDrawEvent"
+                color="Green"
+                textColor="White"
+                tooltip="Start a new game (NUMPAD5)"
+                tooltipPosition="Above"></Button>
+            <Button
+                id="callUno"
+                text="Uno"
+                onClick="callUno"
+                color="Yellow"
+                textColor="Black"
+                tooltip="Call Uno, or call out a player (NUMPAD6)"
+                tooltipPosition="Above"></Button>
+        </HorizontalLayout>
+        <Text
+            alignment="MiddleCenter"
+            fontSize="18"
+            fontStyle="Bold"
+            color="#000000"
+            text="Uno Game Options"></Text>
+        <VerticalScrollView
+            scrollSensitivity="20"
+            scrollbarColors="#AD9F91|#C9B9A9|#756C63|rgba(0.78,0.78,0.78,0.5)">
+            <TableLayout
+                padding="12 12 0 12"
+                cellBackgroundColor="clear"
+                cellPadding="1"
+                autoCalculateHeight="true"
+                flexibleHeight="1">
+                <!--
+                    Player Settings
+                -->
+                <Row padding="0" preferredHeight="32"
+                    visibility="White|Red|Orange|Yellow|Green|Blue|Purple|Pink">
+                    <Cell columnSpan="4"><Text
+                        text="Game Extras (Player)"
+                        fontSize="16"
+                        fontStyle="Bold"
+                        alignment="MiddleCenter"></Text></Cell>
+                </Row>
+                <Row padding="0" preferredHeight="32"
+                    tooltip="Quickly play a card to the pile by 'throwing' it out of your hand toward the deck"
+                    visibility="White|Red|Orange|Yellow|Green|Blue|Purple|Pink">
+                    <Cell columnSpan="1"><Toggle
+                        id="doCardThrows"
+                        onValueChanged="buttonUpdatePlayerBool"
+                        isOn="true"></Toggle></Cell>
+                    <Cell columnSpan="3"><Text
+                        alignment="MiddleLeft"
+                        text="Enable quick play"
+                        fontSize="16"></Text></Cell>
+                </Row>
+                <Row padding="0" preferredHeight="32"
+                    tooltip="When a Skip card is played against you, pass on using your 'No!' card"
+                    visibility="White|Red|Orange|Yellow|Green|Blue|Purple|Pink">
+                    <!-- Pass automatically on No! skips -->
+                    <Cell columnSpan="1"><Toggle
+                        id="noSkipPass"
+                        onValueChanged="buttonUpdatePlayerBool"></Toggle></Cell>
+                    <Cell columnSpan="3"><Text
+                        alignment="MiddleLeft"
+                        text="Ignore 'No!' on Skips"
+                        fontSize="16"></Text></Cell>
+                </Row>
+                <Row padding="0" preferredHeight="32"
+                    tooltip="When a Draw card is played against you, pass on using your 'No!' card"
+                    visibility="White|Red|Orange|Yellow|Green|Blue|Purple|Pink">
+                    <!-- Pass automatically on No! wild draws -->
+                    <Cell columnSpan="1"><Toggle
+                        id="noDrawPassWild"
+                        onValueChanged="buttonUpdatePlayerBool"></Toggle></Cell>
+                    <Cell columnSpan="3"><Text
+                        alignment="MiddleLeft"
+                        text="Ignore 'No!' on Wilds"
+                        fontSize="16"></Text></Cell>
+                </Row>
+                <Row padding="0" preferredHeight="32"
+                    tooltip="When a Draw card is played against you, pass on using your 'No!' card"
+                    visibility="White|Red|Orange|Yellow|Green|Blue|Purple|Pink">
+                    <!-- Pass automatically on No! draws -->
+                    <Cell columnSpan="1"><Toggle
+                        id="noDrawPass"
+                        onValueChanged="buttonUpdatePlayerBool"></Toggle></Cell>
+                    <Cell columnSpan="3"><Text
+                        alignment="MiddleLeft"
+                        text="Ignore 'No!' on Draws"
+                        fontSize="16"></Text></Cell>
+                </Row>
+                <Row padding="0" preferredHeight="32"
+                    tooltip="Automatically play a drawn card if that card is playable"
+                    visibility="White|Red|Orange|Yellow|Green|Blue|Purple|Pink">
+                    <!-- Automatically play a playable card after drawing -->
+                    <Cell columnSpan="1"><Toggle
+                        id="doDrawPlay"
+                        onValueChanged="buttonUpdatePlayerBool"></Toggle></Cell>
+                    <Cell columnSpan="3"><Text
+                        alignment="MiddleLeft"
+                        text="Automatically play drawn cards"
+                        fontSize="16"></Text></Cell>
+                </Row>
+
+                <Row padding="0" preferredHeight="64" visibility="White|Red|Orange|Yellow|Green|Blue|Purple|Pink">
+                    <Cell preferredHeight="64" visibility="Admin"></Cell>
+                </Row>
+
+                <!--
+                    Game setup
+                -->
+                <Row padding="0" preferredHeight="32" visibility="Admin">
+                    <Cell columnSpan="4"><Text
+                        text="Game Setup (Admin)"
+                        fontSize="16"
+                        fontStyle="Bold"
+                        alignment="MiddleCenter"></Text></Cell>
+                </Row>
+                <Row padding="0" preferredHeight="32" visibility="Admin"
+                    tooltip="When a new game starts, players will be given this many cards">
+                    <Cell columnSpan="2"><Text
+                        alignment="MiddleCenter"
+                        text="Starting Cards"
+                        fontSize="16"></Text></Cell>
+                    <!-- Starting Cards -->
+                    <Cell columnSpan="2"><InputField
+                        id="drawStart"
+                        onValueChanged="uiUpdateInt"
+                        text="7"
+                        fontSize="14"
+                        characterValidation="Integer"
+                        flexibleHeight="1"></InputField></Cell>
+                </Row>
+                <Row padding="0" preferredHeight="32" visibility="Admin"
+                    tooltip="Players will be unable to start or end the game unless you promote them">
+                    <!-- Require promoted to start/end -->
+                    <Cell columnSpan="1"><Toggle
+                        id="doForcePerms"
+                        onValueChanged="uiUpdateBool"
+                        isOn="true"></Toggle></Cell>
+                    <Cell columnSpan="3"><Text
+                        alignment="MiddleLeft"
+                        text="Require promoted to start/end game"
+                        fontSize="16"></Text></Cell>
+                </Row>
+                <Row padding="0" preferredHeight="32" visibility="Admin"
+                    tooltip="Randomly select a person to play first">
+                    <!-- Roll for starter -->
+                    <Cell columnSpan="1"><Toggle
+                        id="doRollOnStart"
+                        onValueChanged="uiUpdateBool"
+                        isOn="true"></Toggle></Cell>
+                    <Cell columnSpan="3"><Text
+                        alignment="MiddleLeft"
+                        text="Randomly select first player"
+                        fontSize="16"></Text></Cell>
+                </Row>
+                <Row padding="0" preferredHeight="32" visibility="Admin"
+                    tooltip="Make the counter glow when a player has Uno">
+                    <!-- Glow for UNO -->
+                    <Cell columnSpan="1"><Toggle
+                        id="doCounterFX"
+                        onValueChanged="uiUpdateBool"
+                        isOn="true"></Toggle></Cell>
+                    <Cell columnSpan="3"><Text
+                        alignment="MiddleLeft"
+                        text="Enable counter FX"
+                        fontSize="16"></Text></Cell>
+                </Row>
+                <Row padding="0" preferredHeight="32" visibility="Admin"
+                    tooltip="Use the in-game 'UNO' button for calling Uno. Disable if using voice chat">
+                    <Cell columnSpan="1"><Toggle
+                        id="doCallUno"
+                        onValueChanged="uiUpdateBool"
+                        isOn="true"></Toggle></Cell>
+                    <Cell columnSpan="3"><Text
+                        alignment="MiddleLeft"
+                        text="Use built-in UNO announcing"
+                        fontSize="16"></Text></Cell>
+                </Row>
+
+                <!--
+                    Dealing
+                -->
+                <Row padding="0" preferredHeight="32" visibility="Admin">
+                    <Cell columnSpan="4"><Text
+                        text="Card Dealing (Admin)"
+                        fontSize="16"
+                        fontStyle="Bold"
+                        alignment="MiddleCenter"></Text></Cell>
+                </Row>
+                <Row padding="0" preferredHeight="32" visibility="Admin"
+                    tooltip="Autodeal cards to players when a plus card is played against them">
+                    <!-- Auto deal -->
+                    <Cell columnSpan="1"><Toggle
+                        id="doAutoDraw"
+                        onValueChanged="uiUpdateBool"
+                        isOn="true"></Toggle></Cell>
+                    <Cell columnSpan="3"><Text
+                        alignment="MiddleLeft"
+                        text="Autodeal for draw cards"
+                        fontSize="16"></Text></Cell>
+                </Row>
+                <Row padding="0" preferredHeight="32" visibility="Admin"
+                    tooltip="Display the number of cards being drawn in the chat">
+                    <!-- Count drawn cards -->
+                    <Cell columnSpan="1"><Toggle
+                        id="doCardCount"
+                        onValueChanged="uiUpdateBool"
+                        isOn="true"></Toggle></Cell>
+                    <Cell columnSpan="3"><Text
+                        alignment="MiddleLeft"
+                        text="Count drawn cards"
+                        fontSize="16"></Text></Cell>
+                </Row>
+                <Row padding="0" preferredHeight="32" visibility="Admin"
+                    tooltip="Display the card that is played by a player in the chat">
+                    <!-- Display cards played -->
+                    <Cell columnSpan="1"><Toggle
+                        id="doCardAnnounce"
+                        onValueChanged="uiUpdateBool"
+                        isOn="true"></Toggle></Cell>
+                    <Cell columnSpan="3"><Text
+                        alignment="MiddleLeft"
+                        text="Display cards played"
+                        fontSize="16"></Text></Cell>
+                </Row>
+
+                <!--
+                    Player Turns
+                -->
+                <Row padding="0" preferredHeight="32" visibility="Admin">
+                    <Cell columnSpan="4"><Text
+                        text="Player Turns (Admin)"
+                        fontSize="16"
+                        fontStyle="Bold"
+                        alignment="MiddleCenter"></Text></Cell>
+                </Row>
+                <Row padding="0" preferredHeight="32" visibility="Admin"
+                    tooltip="Enable player turns">
+                    <!-- Enable turns -->
+                    <Cell columnSpan="1"><Toggle
+                        id="doUseTurns"
+                        onValueChanged="uiUpdateBool"
+                        isOn="true"></Toggle></Cell>
+                    <Cell columnSpan="3"><Text
+                        alignment="MiddleLeft"
+                        text="Enable turn system"
+                        fontSize="16"></Text></Cell>
+                </Row>
+                <Row padding="0" preferredHeight="32" visibility="Admin"
+                    tooltip="Announce when it is a players turn">
+                    <!-- Announce turns -->
+                    <Cell columnSpan="1"><Toggle
+                        id=""
+                        onValueChanged="uiUpdateBool"
+                        isOn="true"></Toggle></Cell>
+                    <Cell columnSpan="3"><Text
+                        alignment="MiddleLeft"
+                        text="Announce player turns"
+                        fontSize="16"></Text></Cell>
+                </Row>
+                <Row padding="0" preferredHeight="32" visibility="Admin"
+                    tooltip="Limit drawing cards on a turn to 1 card">
+                    <!-- Limit drawing -->
+                    <Cell columnSpan="1"><Toggle
+                        id="doRuleDrawOne"
+                        onValueChanged="uiUpdateBool"></Toggle></Cell>
+                    <Cell columnSpan="3"><Text
+                        alignment="MiddleLeft"
+                        text="Limit draws to 1"
+                        fontSize="16"></Text></Cell>
+                </Row>
+                <Row padding="0" preferredHeight="32" visibility="Admin"
+                    tooltip="If playing invalid moves should be disallowed">
+                    <!-- Validate cards played -->
+                    <Cell columnSpan="1"><Toggle
+                        id="doValidateCards"
+                        onValueChanged="uiUpdateBool"
+                        isOn="true"></Toggle></Cell>
+                    <Cell columnSpan="3"><Text
+                        alignment="MiddleLeft"
+                        text="Validate played cards"
+                        fontSize="16"
+                        tooltipPosition="Below"></Text></Cell>
+                </Row>
+
+                <!--
+                    Miscellaneous
+                -->
+                <Row padding="0" preferredHeight="32" visibility="Admin">
+                    <Cell columnSpan="4"><Text
+                        text="Miscellaneous (Admin)"
+                        fontSize="16"
+                        fontStyle="Bold"
+                        alignment="MiddleCenter"></Text></Cell>
+                </Row>
+                <Row padding="0" preferredHeight="32" visibility="Admin"
+                    tooltip="The amount of cards to keep in the center table stack">
+                    <!-- Played cards size -->
+                    <Cell columnSpan="2"><Text
+                        alignment="MiddleCenter"
+                        text="Retain played cards"
+                        fontSize="16"
+                        padding="0"></Text></Cell>
+                    <Cell columnSpan="2"><InputField
+                        id="deckLimit"
+                        onValueChanged="uiUpdateInt"
+                        text="6"
+                        fontSize="14"
+                        characterValidation="Integer"
+                        flexibleHeight="1"></InputField></Cell>
+                </Row>
+
+                <!--
+                    House Rules
+                -->
+                <Row padding="0" preferredHeight="32" visibility="Admin">
+                    <Cell columnSpan="4"><Text
+                        text="House Rules (Admin)"
+                        fontSize="16"
+                        fontStyle="Bold"
+                        alignment="MiddleCenter"></Text></Cell>
+                </Row>
+                <Row padding="0" preferredHeight="32" visibility="Admin"
+                    tooltip="+2 or +3 can be stacked and passed to the next player">
+                    <!-- Validate cards played -->
+                    <Cell columnSpan="1"><Toggle
+                        id="houseStackDraws"
+                        onValueChanged="uiUpdateBool"
+                        isOn="true"></Toggle></Cell>
+                    <Cell columnSpan="3"><Text
+                        alignment="MiddleLeft"
+                        text="Allow stacking draws"
+                        fontSize="16"></Text></Cell>
+                </Row>
+                <Row padding="0" preferredHeight="32" visibility="Admin"
+                    tooltip="Allows any player to play a card at any time, as long as the face on the card matches">
+                    <!-- Allow jumping in -->
+                    <Cell columnSpan="1"><Toggle
+                        id="houseJumpIn"
+                        onValueChanged="uiUpdateBool"></Toggle></Cell>
+                    <Cell columnSpan="3"><Text
+                        alignment="MiddleLeft"
+                        text="Allow jumping in"
+                        fontSize="16"></Text></Cell>
+                </Row>
+                <Row padding="0" preferredHeight="32" visibility="Admin"
+                    tooltip="After playing a '0' card, all players will switch hands">
+                    <!-- Validate cards played -->
+                    <Cell columnSpan="1"><Toggle
+                        id="houseRotate"
+                        onValueChanged="uiUpdateBool"></Toggle></Cell>
+                    <Cell columnSpan="3"><Text
+                        alignment="MiddleLeft"
+                        text="Rotate hands on '0' card"
+                        fontSize="16"></Text></Cell>
+                </Row>
+                <Row padding="0" preferredHeight="32" visibility="Admin"
+                    tooltip="After playing a '7' card, a player can choose to switch hands with another player">
+                    <!-- Validate cards played -->
+                    <Cell columnSpan="1"><Toggle
+                        id="houseSwitch"
+                        onValueChanged="uiUpdateBool"></Toggle></Cell>
+                    <Cell columnSpan="3"><Text
+                        alignment="MiddleLeft"
+                        text="Swap hands on '7' card"
+                        fontSize="16"></Text></Cell>
+                </Row>
+            </TableLayout>
+        <!--/Panel-->
+        </VerticalScrollView>
+    </VerticalLayout>
+</Panel>
