@@ -223,7 +223,7 @@
                 tooltipPosition="Above"></Button>
             <Button
                 id="callUno"
-                text="Uno"
+                text="Yell Uno"
                 onClick="callUno"
                 color="Yellow"
                 textColor="Black"
@@ -269,7 +269,7 @@
                         fontSize="16"></Text></Cell>
                 </Row>
                 <Row padding="0" preferredHeight="32"
-                    tooltip="When a Skip card is played against you, pass on using your 'No!' card"
+                    tooltip="When a Skip card is played against you, ignore using your 'No!' card"
                     visibility="White|Red|Orange|Yellow|Green|Blue|Purple|Pink">
                     <!-- Pass automatically on No! skips -->
                     <Cell columnSpan="1"><Toggle
@@ -281,7 +281,7 @@
                         fontSize="16"></Text></Cell>
                 </Row>
                 <Row padding="0" preferredHeight="32"
-                    tooltip="When a Draw card is played against you, pass on using your 'No!' card"
+                    tooltip="When a Draw card is played against you, ignore using your 'No!' card"
                     visibility="White|Red|Orange|Yellow|Green|Blue|Purple|Pink">
                     <!-- Pass automatically on No! wild draws -->
                     <Cell columnSpan="1"><Toggle
@@ -293,7 +293,7 @@
                         fontSize="16"></Text></Cell>
                 </Row>
                 <Row padding="0" preferredHeight="32"
-                    tooltip="When a Draw card is played against you, pass on using your 'No!' card"
+                    tooltip="When a Draw card is played against you, ignore using your 'No!' card"
                     visibility="White|Red|Orange|Yellow|Green|Blue|Purple|Pink">
                     <!-- Pass automatically on No! draws -->
                     <Cell columnSpan="1"><Toggle
@@ -518,13 +518,16 @@
                         text="Retain played cards"
                         fontSize="16"
                         padding="0"></Text></Cell>
-                    <Cell columnSpan="2"><InputField
+                    <Cell columnSpan="2"><Slider
                         id="deckLimit"
                         onValueChanged="uiUpdateInt"
-                        text="6"
-                        fontSize="14"
+                        value="1"
+                        minValue="1"
+                        maxValue="1"
                         characterValidation="Integer"
-                        flexibleHeight="1"></InputField></Cell>
+                        flexibleHeight="1"
+                        direction="LeftToRight"
+                        wholeNumbers="true"></Slider></Cell>
                 </Row>
 
                 <!--
@@ -537,11 +540,21 @@
                         fontStyle="Bold"
                         alignment="MiddleCenter"></Text></Cell>
                 </Row>
+                <Row padding="0" preferredHeight="32" visibility="Admin">
+                    <Cell columnSpan="1"><Toggle
+                        id="Challenge"
+                        onValueChanged="uiUpdateBool"
+                        isOn="true"></Toggle></Cell>
+                    <Cell columnSpan="3"><Text
+                        alignment="MiddleLeft"
+                        text="Allow challenging wilds"
+                        fontSize="16"></Text></Cell>
+                </Row>
                 <Row padding="0" preferredHeight="32" visibility="Admin"
                     tooltip="+2 or +3 can be stacked and passed to the next player">
                     <!-- Validate cards played -->
                     <Cell columnSpan="1"><Toggle
-                        id="houseStackDraws"
+                        id="StackDraws"
                         onValueChanged="uiUpdateBool"
                         isOn="true"></Toggle></Cell>
                     <Cell columnSpan="3"><Text
@@ -553,7 +566,7 @@
                     tooltip="Allows any player to play a card at any time, as long as the face on the card matches">
                     <!-- Allow jumping in -->
                     <Cell columnSpan="1"><Toggle
-                        id="houseJumpIn"
+                        id="JumpIn"
                         onValueChanged="uiUpdateBool"></Toggle></Cell>
                     <Cell columnSpan="3"><Text
                         alignment="MiddleLeft"
@@ -564,7 +577,7 @@
                     tooltip="After playing a '0' card, all players will switch hands">
                     <!-- Validate cards played -->
                     <Cell columnSpan="1"><Toggle
-                        id="houseRotate"
+                        id="Rotate"
                         onValueChanged="uiUpdateBool"></Toggle></Cell>
                     <Cell columnSpan="3"><Text
                         alignment="MiddleLeft"
@@ -575,7 +588,7 @@
                     tooltip="After playing a '7' card, a player can choose to switch hands with another player">
                     <!-- Validate cards played -->
                     <Cell columnSpan="1"><Toggle
-                        id="houseSwitch"
+                        id="Switch"
                         onValueChanged="uiUpdateBool"></Toggle></Cell>
                     <Cell columnSpan="3"><Text
                         alignment="MiddleLeft"
