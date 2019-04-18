@@ -17,7 +17,9 @@ lastPlay = ''  -- The face of the card played last
 lastColors = nil -- The last card that was played
 lastStack = true -- If the last card can be stacked on
 
+-- [ Playing settings ]
 playMode = 'draw' -- Ruleset for what a player can do on their turn
+playColorChange = nil
 
 -- [ Draw Settings ]
 lastDraw = ''  -- Color of who drew a card last
@@ -28,7 +30,7 @@ attacked = nil -- The player that has an attack card played on them
 
 -- [ Deck Settings ]
 deckSize = 0   -- Current size of the deck
-deckLimit = 6  -- Limit of the deck size before cards are shuffled
+deckLimit = 32  -- Limit of the deck size before cards are shuffled
 
 -- [ Active Game ]
 started = false      -- If game is started
@@ -50,21 +52,20 @@ doCallUno = true       -- Ingame UNO button is used
 doLookForGroup = false -- Is looking for new players to join
 
 -- [ Settings: House Rules ]
-houseStackDraws = true -- Allow +2 +3 to stack
-houseChallenge = true  -- Allow challenging
-houseRotate = false    -- Rotate hands on 0's
-houseSwitch = false    -- Swap hands on 7's
-houseFalseUno = false  -- Draw cards when incorrectly calling uno
-houseJumpIn = false    -- Players can jump in
+house = {
+    Challenge = true,  -- Allow challenging
+    StackDraws = true, -- Allow +2 +3 to stack
+    Rotate = false,    -- Rotate hands on 0's
+    Switch = false,    -- Swap hands on 7's
+    FalseUno = false,  -- Draw cards when incorrectly calling uno
+    JumpIn = false    -- Players can jump in
+}
 
 -- Player colors at the table
 firstPlayer = nil
 playerSettings = {}
-playerNick = {
-    theelm = "Greg",
-    ["united legendz"] = "Jake",
-    soli_aeterna = "Brittany"
-}
+playerNick = {}
+playerWins = {}
 colors = {"White","Red","Orange","Yellow","Green","Blue","Purple","Pink"}
 validCardColors = { "Blue", "Cyan", "Green", "Orange", "Purple", "Red" }
 playingColors = {}
@@ -198,7 +199,6 @@ function clickedButton( button, pColor, alt )
                 if doCardCount then
                     printToAllExcept( name .. " draws " .. drawCount .. " card" .. ( drawCount ~= 1 and "s" or "" ) .. ".", player.color, color_yellow )
                 end
-                log( name .. " draws cards" )
 
                 -- If draw counter is same as cards needed
                 if Turns.enable then
@@ -232,12 +232,20 @@ end
 
 -- [[ Start a new game ]]
 function onUnoStart( player )
-    dostart=true
+    -- Check if starting count is low enough
+    local players = Player.getPlayers()
+    local cards = bag.getObjects()
+    if #cards / #players < _G.drawStart then
+        broadcastToColor( "Can't start game. Not enough cards for " .. #players .. " players. (" .. #cards .. " / " .. ( _G.drawStart * #players ) .. ")", player.color, color_red )
+        return false
+    end
 
     -- Shuffle cards
     bag.shuffle()
     bag.shuffle()
     bag.shuffle()
+
+    dostart=true
 
     -- Reset mode
     _G.playMode = 'draw'
@@ -323,7 +331,7 @@ function onUnoStart( player )
 
                                 obj.setLock( true )
                                 local roll = obj.getRotationValue()
-                                printToAll( Players.Name( tPlayer ) .. " rolls a d20, and gets " .. roll, color_white )
+                                printToAll( Players.Name( tPlayer ) .. " rolls a d20, and gets " .. roll, color )
 
                                 onEndDiRoll()
 
@@ -345,7 +353,7 @@ function onUnoStart( player )
     Wait.frames((function()
         dostart=false
         started=true
-    end), 15 * drawStart)
+    end), (15 * drawStart)+ 20)
 
     Wait.condition((function()
         Wait.frames((function()
@@ -412,7 +420,7 @@ function onUnoEnd( player )
                     index = 1,
                     position = {
                         x = 0,
-                        y = 2 + ( d * 0.1 ),
+                        y = 2 + ( d * 0.2 ),
                         z = 0
                     },
                     rotation = {
@@ -421,6 +429,7 @@ function onUnoEnd( player )
                         0
                     },
                     callback_function = (function(obj)
+                        obj.use_gravity = false
                         bag.putObject( obj )
                     end)
                 })
@@ -459,7 +468,8 @@ function onUnoEnd( player )
         -- Update button name
         local tGame = getObjectFromGUID( gameIds[ color ] )
         tGame.editButton( { tooltip = 'New Game' } )
-        tGame.interactable = true
+        tGame.interactable = false
+
         UI.setAttributes( "drawButton", {
             text = "New Game",
             color = "Green",
@@ -625,7 +635,8 @@ Card = {
     end),
     -- If a card can be played down
     Playable = (function( player, cardObj, jumpin )
-        if jumpin == nil then
+        -- If "jumpin" not set in parameter
+        if ( jumpin == nil ) or ( not _G.house.JumpIn ) then
             jumpin = false
         end
         if not player.seated then
@@ -633,8 +644,8 @@ Card = {
         end
 
         -- Check who's turn it is
-        if Turns.enable and not jumpin then
-            if Turns.turn_color ~= player.color then
+        if Turns.enable then
+            if ( Turns.turn_color ~= player.color ) and ( not jumpin ) then
                 return false
             end
         end
@@ -645,14 +656,14 @@ Card = {
         -- If player has to draw, only accept stacked cards or NO!
         if ( turnDraw > 0 or #playColors == 0 ) and not ( playFace == "No!" or ( lastPlay == playFace and lastStack ) ) then
             return false
-        elseif _G.playMode == "no!" and not playFace == "No!" then
+        elseif _G.playMode == "no!" and playFace ~= "No!" then
             return false
         end
 
         -- Match the card colors
         for c1 = 1, #playColors do
             playColor = playColors[c1]
-            if playColor == "Wild" and not jumpin then
+            if playColor == "Wild" and ( not jumpin ) then
                 -- If player plays a wild
                 if playFace == "No!" then
                     -- If wild is a No, and an attack has not been played, or attacker is not the player
@@ -667,7 +678,10 @@ Card = {
                 end
                 for c2 = 1, #lastColors do
                     lastColor = lastColors[ c2 ]
-                    if ( lastColor == "Wild" and not jumpin ) or lastColor == playColor then
+                    if ( ( jumpin and _G.house.JumpIn ) and ( playFace == lastPlay ) and ( lastColor == playColor ) ) then
+                        return true
+                    end
+                    if ( ( lastColor == "Wild" ) or ( lastColor == playColor ) ) and ( not jumpin ) then
                         return true
                     end
                 end
@@ -675,9 +689,9 @@ Card = {
         end
 
         -- Match the color faces
-        if playFace == lastPlay and lastStack then
+        if playFace == lastPlay and lastStack and ( not jumpin ) then
             -- If can't stack draws
-            if not houseStackDraws and ( (playFace == "+2") or (playFace == "+3") or (playFace == "+4") or (playFace == "+8") ) then
+            if not _G.house.StackDraws and ( (playFace == "+2") or (playFace == "+3") or (playFace == "+4") or (playFace == "+8") ) then
                 return false
             end
             return true
@@ -730,26 +744,48 @@ Players = {
     end),
     -- Draw cards for a player
     Draw = (function( pColor )
+        local player = Player[ pColor ]
+
         -- Position to spawn card at
         local position = bag.getPosition()
         position["y"] = position.y - 1
 
-        local count = drawCount
+        -- Count down draw requirement
+        if _G.attacked == pColor and _G.turnDraw > 0 then
+            _G.turnDraw = _G.turnDraw - 1
+        end
+
+        local count = _G.drawCount
+
+        -- Check bag count
+        local bagRemaining = bag.getObjects()
+        log( Players.Name( player ) .. " card from bag, " .. #bagRemaining .. " cards remaining." )
+
+        if #bagRemaining <= 0 then
+            broadcastToColor( "Can't draw card. Deck is empty.", pColor, color_red )
+            return false
+        end
 
         -- Shuffle the bag
-        bag.shuffle()
+        _G.bag.shuffle()
         -- Deal object from the bag
-        bag.takeObject({
+        _G.bag.takeObject({
             -- When the card is done spawning
             callback_function = (function( obj )
                 local player = Player[ pColor ]
                 local playable = nil
 
                 Wait.condition((function()
-                    if obj.getVar( "face_value" ) ~= nil then
+                    local faceVal = obj.getVar( "face_value" )
+
+                    if faceVal ~= nil then
                         printToColor( count .. ". You drew \"" .. Card.ColorString( obj ) .. " " .. obj.getVar( "face_value" ) .. "\".", pColor, color_green )
-                    else
-                        printToColor( "Nil face value :(", pColor, color_red )
+                    end
+
+                    local pCount = tonumber( playingHands[ pColor ] )
+                    if ( ( pCount ~= nil ) and ( pCount < 10 ) and ( faceVal == "Discard" ) ) then
+                        Players.Draw( pColor )
+                        return
                     end
 
                     Card.Assign( obj, player )
@@ -784,6 +820,15 @@ Players = {
             top = false,
             smooth = false
         })
+        return true
+    end),
+    GetHandZone = (function( pColor )
+        for id, color in pairs( _G.handZones ) do
+            if ( pColor == color ) then
+                return getObjectFromGUID( id )
+            end
+        end
+        return nil
     end),
     -- Return the players owned cards
     Hand = (function( player )
@@ -806,9 +851,9 @@ Players = {
     end),
     -- Return the players name
     Name = (function( player )
-        local name = string.lower( player.steam_name )
-        if ( playerNick[ name ] ~= nil ) then
-            return playerNick[ name ]
+        local steam_id = string.lower( player.steam_id )
+        if ( playerNick[ steam_id ] ~= nil ) then
+            return playerNick[ steam_id ]
         end
         return player.steam_name
     end),
@@ -837,8 +882,9 @@ Players = {
             local player = Player[ color ]
             hands[ color ] = Players.Hand( player )
         end
-        playingHands = {}
+        _G.playingHands = {}
 
+        -- Iterate each player
         for r = 1, #rotateColors do
             local color = rotateColors[r]
             local hand = hands[ color ]
@@ -870,15 +916,22 @@ Players = {
 
                 -- Add hand to collection
                 for count, card in pairs( hand ) do
-                    --card.flip()
                     Card.Assign( card, nextPlayer, false )
                     table.insert( swapCards, card )
+                end
+
+                -- Player call UNO automatically
+                local newHand = _G.playingHands[ nextColor ]
+                if #newHand == 1 then
+                    broadcastToAll( Players.Name( nextPlayer ) .. ": Uno!", color_green )
+                    _G.unoHolders[ nextColor ] = true
                 end
             end
         end
 
         log( "Rotating player hands" )
 
+        -- Rotate hands around
         for c = 1, #swapCards do
 
             Wait.frames((function()
@@ -887,15 +940,12 @@ Players = {
 
                 if ( swapCard ~= nil ) then
                     pColor = swapCard.getVar( "player" )
-                    --swapCard.deal( 1, pColor )
 
                     local pHand = Player[pColor].getHandTransform()
                     pHand.rotation.y = pHand.rotation.y - rotation
 
                     swapCard.setPosition( pHand.position )
                     swapCard.setRotation( pHand.rotation )
-
-                    --swapCard.flip()
                 end
 
             end), ( c * 2 ) + 20 )
@@ -966,6 +1016,14 @@ function onPlayedCard( player, cardObj )
             Turns.reverse_order = not Turns.reverse_order
         end
 
+        -- If player is jumping in
+        if ( Turns.turn_color ~= player.color ) then
+            broadcastToAll( Players.Name( player ) .. " jumped in!", color_red )
+            Turns.turn_color = player.color
+            Players.ShiftTurns( true )
+            return
+        end
+
         -- If not No, and not Discard, end turn.
         if ( face ~= "No!" and face ~= "Discard" ) or ( face == "Discard" and #hand <= 1 ) then
             if player.color == Turns.turn_color then
@@ -1007,31 +1065,31 @@ function onPlayedCard( player, cardObj )
 
     -- Increase the amount of cards the next player needs to draw
     if face == "+8" then
-        turnDraw = 8
-        attacked = Turns.turn_color
+        _G.turnDraw = 8
+        _G.attacked = Turns.turn_color
     elseif face == "+4" then
-        turnDraw = 4
-        attacked = Turns.turn_color
+        _G.turnDraw = 4
+        _G.attacked = Turns.turn_color
     elseif face == "+3" then
-        if houseStackDraws then
-            turnDraw = turnDraw + 3
+        if _G.house.StackDraws then
+            _G.turnDraw = turnDraw + 3
         else
-            turnDraw = 3
+            _G.turnDraw = 3
         end
-        attacked = Turns.turn_color
+        _G.attacked = Turns.turn_color
     elseif face == "+2" then
-        if houseStackDraws then
-            turnDraw = turnDraw + 2
+        if _G.house.StackDraws then
+            _G.turnDraw = turnDraw + 2
         else
-            turnDraw = 2
+            _G.turnDraw = 2
         end
-        attacked = Turns.turn_color
+        _G.attacked = Turns.turn_color
     else -- Attack cards [ Not draws ]
-        turnDraw = 0
+        _G.turnDraw = 0
         if face == "Skip" then
-            attacked = Turns.turn_color
+            _G.attacked = Turns.turn_color
         else -- Non-attack cards
-            attacked = nil
+            _G.attacked = nil
         end
     end
 
@@ -1058,9 +1116,9 @@ function onPlayedCard( player, cardObj )
             if type( nextFace ) ~= "nil" then
                 if nextFace == "No!" then
                     pHasNope=true
-                elseif nextFace == "+2" and houseStackDraws then
+                elseif nextFace == "+2" and _G.house.StackDraws then
                     pHasPlusTwo=true
-                elseif nextFace == "+3" and houseStackDraws then
+                elseif nextFace == "+3" and _G.house.StackDraws then
                     pHasPlusThr=true
                 end
             end
@@ -1157,7 +1215,7 @@ function onPlayedCard( player, cardObj )
                 end
             else
                 wasAnnounced = Players.AnnounceTurn( Player[ Turns.turn_color ] )
-                broadcastToColor( "You have to draw "..turnDraw.." cards! Play a \"No!\" card, a \""..lastPlay.."\" card, or click the draw button!", nextPlayer.color, color_yellow )
+                broadcastToColor( "You have to draw " .. turnDraw .. " cards! Play a \"No!\" card, a \""..lastPlay.."\" card, or click the draw button!", nextPlayer.color, color_yellow )
             end
         end
     end
@@ -1172,10 +1230,12 @@ function onPlayedCard( player, cardObj )
     end
 
     -- Swap hands
-    if face == "0" and houseRotate then
-        broadcastToAll( Players.Name( player ) .. " is rotating hands!", color_yellow )
-        Players.RotateHands( player.color, colors )
-    elseif face == "7" and houseSwitch then
+    if face == "0" and _G.house.Rotate then
+        Wait.frames((function()
+            broadcastToAll( Players.Name( player ) .. " is rotating hands!", color_yellow )
+            Players.RotateHands( player.color, colors )
+        end), 60)
+    elseif face == "7" and _G.house.Switch then
         updateTradeableColors( player.color )
         UI.setAttributes( "tradePlayersBox", {
             visibility = player.color
@@ -1186,7 +1246,13 @@ end
 
 -- [[ When game is saved ]]
 function onSave()
-    --print( "Data saved" )
+
+    local save = JSON.encode({
+        nicknames = _G.playerNick,
+        rules = _G.house
+    })
+
+    return save
 end
 
 --[[ The OnLoad function. This is called after everything in the game save finishes loading.
@@ -1233,8 +1299,13 @@ function onLoad( saveData )
         playerSettings[ color ] = shallowcopy( validSettings )
     end
 
+    -- Lock color-UI cube
+    local cube = getObjectFromGUID( _G.color_cube )
+    cube.interactable = false
+    cube.setLock( true )
+
     -- Lock di bag
-    local di = getObjectFromGUID( die_GUID )
+    local di = getObjectFromGUID( _G.die_GUID )
     di.interactable = false
     di.setLock( true )
     di.setPosition({
@@ -1244,7 +1315,7 @@ function onLoad( saveData )
     })
 
     -- Lock bag in place
-    bag = getObjectFromGUID(deck_GUID)
+    bag = getObjectFromGUID( _G.deck_GUID )
     bag.interactable = false
     bag.setLock( true )
     bag.setPosition({
@@ -1252,18 +1323,45 @@ function onLoad( saveData )
         y = -3,
         z = 0
     })
+    local cards = bag.getObjects()
 
     -- Lock card zone in place
-    local zone = getObjectFromGUID(zone_GUID)
+    local zone = getObjectFromGUID( _G.zone_GUID )
     zone.interactable = false
+    zone.setLock( true )
 
     -- Update UI
     updateTradeableColors( "" )
     houseRulesToNotes()
 
+    -- Update UI values
+    UI.setAttributes( "deckLimit", {
+        maxValue = #cards,
+        value = _G.deckLimit
+    })
+
+    -- Load values from save
+
+
     -- Clear chat log
     for p = 1, 20 do
         printToAll( "" )
+    end
+
+    if ( saveData ~= "" ) then
+        local loadData = JSON.decode( saveData )
+        -- Get saved nicknames
+        if ( loadData.nicknames ~= nil ) then
+            _G.playerNick = loadData.nicknames
+        end
+        -- Load Rule values
+        if ( loadData.rules ~= nil ) then
+            local rules = loadData.rules
+            for rule, val in pairs( rules ) do
+                uiUpdateBool( nil, ( val and "True" or "False" ), rule )
+            end
+        end
+        --print( saveData )
     end
     print('Finished loading Uno.')
 end
@@ -1329,8 +1427,8 @@ end
 
 --[[ The Object Drop Function, called when an object is dropped --]]
 function onObjectDropped( pColor, dObject )
-    player = Player[ pColor ]
-    now = os.time(os.date("!*t"))
+    local player = Player[ pColor ]
+    local now = os.time(os.date("!*t"))
 
     deck = dObject.getVar( "deck" )
     disc = dObject.getVar( "discard" )
@@ -1348,8 +1446,8 @@ function onObjectDropped( pColor, dObject )
             -- If time is set
             diff = now - time
             if diff < 2 then
-                if doValidateCards and not Card.Playable( player, dObject ) then
-                    broadcastToColor( "You cannot play that card!"..( turnDraw > 0 and " You need to draw "..turnDraw.." cards." or "" ), pColor, color_red )
+                if _G.doValidateCards and not Card.Playable( player, dObject, Turns.enable and ( Turns.turn_color ~= pColor ) ) then
+                    broadcastToColor( "You cannot play that card!" .. ( _G.turnDraw > 0 and " You need to draw "..turnDraw.." cards." or "" ) .. ( _G.playMode == "no!" and " You need to play your \"No!\" card, or end your turn." or "" ), pColor, color_red )
                     dObject.deal( 1, pColor )
                     return
                 end
@@ -1368,8 +1466,8 @@ function onObjectDropped( pColor, dObject )
             end
 
             -- Check if card can be played
-            if doValidateCards and not Card.Playable( player, dObject ) then
-                broadcastToColor( "You cannot play that card!"..( turnDraw > 0 and " You need to draw "..turnDraw.." cards." or "" ), pColor, color_red )
+            if doValidateCards and not Card.Playable( player, dObject, Turns.enable and ( Turns.turn_color ~= pColor ) ) then
+                broadcastToColor( "You cannot play that card!" .. ( turnDraw > 0 and " You need to draw " .. turnDraw .. " cards." or "" ) .. ( _G.playMode == "no!" and " You need to play your \"No!\" card, or end your turn." or "" ), pColor, color_red )
                 dObject.deal( 1, pColor )
                 return
             end
@@ -1450,8 +1548,8 @@ function onObjectLeaveScriptingZone( zone, dObject )
         face = dObject.getVar( "face_value" )
         if face ~= nil then
             cardOwner = dObject.getVar( "player" )
-            if ( pColor == cardOwner and doValidateCards ) and not Card.Playable( player, dObject ) then
-                broadcastToColor( "You cannot play that card!"..( turnDraw > 0 and " You need to draw "..turnDraw.." cards." or "" ), pColor, color_red )
+            if ( pColor == cardOwner and doValidateCards ) and not Card.Playable( player, dObject, Turns.enable and ( Turns.turn_color ~= pColor ) ) then
+                broadcastToColor( "You cannot play that card!" .. ( turnDraw > 0 and " You need to draw "..turnDraw.." cards." or "" ) .. ( _G.playMode == "no!" and " You need to play your \"No!\" card, or end your turn." or "" ), pColor, color_red )
                 dObject.deal( 1, cardOwner )
                 return
             elseif ( pColor == cardOwner ) then
@@ -1470,28 +1568,83 @@ end
 
 -- [[ Custom chat commands ]]
 function onChat( message, player )
-    if ( message == "endturn" or message == "end turn" ) then
-        if not Turns.enable then
-            -- Turns disabled
-            printToColor( "Turns are not enabled!", player.color, color_red )
-        elseif Turns.turn_color ~= player.color then
-            -- Not players turn
-            printToColor( "You cannot end your turn, it isn't your turn!", player.color, color_red )
-        elseif turnDraw > 0 then
-            -- Player must draw cards
-            printToColor( "You cannot end your turn, you've got "..turnDraw.." cards to draw!", player.color, color_red )
+    -- Lowercased name
+    local name = string.lower( player.steam_name )
+    local id = player.steam_id
+    -- Split message
+    local split = {}
+    message:gsub( "([^ ]*)", function( i )
+        table.insert( split, i )
+    end)
+    if ( startsWith( ".", message ) ) then
+        printToColor( ( playerNick[ id ] ~= null and playerNick[ id ] or player.steam_name ) .. ": " .. message, player.color, player.color )
+        -- Check message
+        if ( message == ".help" ) then
+            local helpData = {
+                "==== BEGIN HELP ====",
+                " .help - Display this information",
+                " .endturn - End your turn if you become stuck",
+                " .endgame - Prematurely end the game",
+                " .nick - Set your nickname for chat",
+                "==== END OF HELP ===="
+            }
+            printToColor( table.concat( helpData, "\n" ), player.color, color_yellow )
+
+        elseif ( message == ".endturn" or message == ".end turn" ) then
+            if not Turns.enable then
+                -- Turns disabled
+                printToColor( "Turns are not enabled!", player.color, color_red )
+            elseif Turns.turn_color ~= player.color then
+                -- Not players turn
+                printToColor( "You cannot end your turn, it isn't your turn!", player.color, color_red )
+            elseif turnDraw > 0 then
+                -- Player must draw cards
+                printToColor( "You cannot end your turn, you've got "..turnDraw.." cards to draw!", player.color, color_red )
+            else
+                -- End players turn
+                _G.playMode = 'draw'
+                attacked = nil
+                Players.ShiftTurns( true )
+            end
+
+        elseif ( message == ".endgame" or message == ".end game" ) and ( player.admin or player.promoted ) then
+            if ( not started ) then
+                printToColor( "> Game has not yet started", player.color, color_red )
+                return false
+            end
+
+            onUnoEnd( player )
+
+        elseif ( message == ".test rotate" ) and ( player.admin or player.promoted ) then
+            Players.RotateHands( player.color, colors )
+
+        elseif ( message == ".test color" ) and ( player.admin or player.promoted ) then
+            showColorSelect( player.color, validCardColors )
+
+        elseif ( ( #split > 0 ) and ( split[1] == ".nick" ) ) then
+            nick = string.sub( message, string.len( split[1] ) + ( ( #split > 1 ) and 2 or 1 ) ):gsub( "%s+$", " " ):gsub( "^%s+", "" )
+            if ( nick == "" ) then
+                printToColor( "No nickname was specified. Please type the command as such \".nick " .. player.steam_name ..  "\" or \".nick YourNameHere\".", player.color, color_red )
+                return false
+            end
+            if ( string.len( nick ) >= 32 ) then
+                printToColor( "That nickname is too long", player.color, color_red )
+                return false
+            end
+
+            printToAllExcept( player.steam_name .. " is now known as \"" .. nick .. "\"", player.color, color_green )
+            printToColor( "Nickname updated to \"" .. nick .. "\"", player.color, color_green )
+
+            playerNick[ id ] = nick
         else
-            -- End players turn
-            attacked = nil
-            Players.ShiftTurns( true )
+            printToColor( "Unknown command \"" .. message .. "\", Try \".help\"", player.color, color_red )
+
         end
         return false
-    elseif ( message == "endgame" or message == "end game" ) and ( player.admin or player.promoted ) then
-        onUnoEnd( player )
+    else
+        printToAll( ( playerNick[ id ] ~= null and playerNick[ id ] or player.steam_name ) .. ": " .. message, player.color )
         return false
-    elseif ( message == "test" ) then
-        Players.RotateHands( player.color, colors )
-        return false
+
     end
     return true
 end
@@ -1540,7 +1693,7 @@ function update()
                 object.highlightOff()
             end
             deckSize = #deck
-            if #deck > deckLimit then
+            if #deck > _G.deckLimit then
                 local cardId = deck[1].guid
                 local card = object.takeObject({
                     guid = cardId
@@ -1572,16 +1725,16 @@ function update()
         -- If player has counter
         if gameIds[ color ] ~= nil then
             local player = Player[ color ]
+            local steam_id = player.steam_id
 
             local count = ( colorCards[ color ] == nil and 0 or colorCards[ color ] )
             local counter = getObjectFromGUID( gameIds[ color ] )
             local oldCount = tonumber( counter.UI.getValue( "counter" ) )
 
+            -- Update card change
             if count ~= oldCount then
                 onCardCountChange( player, count )
             end
-
-            counter.UI.setValue( "counter", ( player.seated and count or "" ) )
 
             if started then
                 if ( count == 1 or count == 0 ) and ( player.seated and InArray( color, playingColors ) ) then
@@ -1594,6 +1747,7 @@ function update()
 
                         -- Announce winner
                         broadcastToAll( Players.Name( player ) .. " wins the game!", color_green )
+                        playerWins[ steam_id ] = ( playerWins[ steam_id ] ~= nil and playerWins[ steam_id ] or 0 ) + 1
 
                         -- Change button tooltip
                         for c = 1, #colors do
@@ -1622,6 +1776,14 @@ function update()
                         counter.highlightOff()
                     end
                 end
+            else
+                -- If game is not started, set count to number of wins
+                count = ( playerWins[ steam_id ] ~= nil and playerWins[ steam_id ] or 0 )
+            end
+
+            local counterVal = ( player.seated and count or "" )
+            if counter.UI.getValue( "counter" ) ~= counterVal then
+                counter.UI.setValue( "counter", counterVal )
             end
         end
     end
@@ -1629,6 +1791,9 @@ end
 
 -- Color selector
 function showColorSelect( pColor, colors )
+    -- Update who can change the color
+    _G.playColorChange = pColor
+
     -- Update cube
     local cube = getObjectFromGUID( _G.color_cube )
 
@@ -1636,8 +1801,12 @@ function showColorSelect( pColor, colors )
     if _G.gameIds[ pColor ] ~= nil then
         local triangle = getObjectFromGUID(_G.gameIds[ pColor ]).getRotation()
         local rotation = cube.getRotation()
+        rotation.z = 45
         rotation.y = triangle.y - 90
         cube.setRotation( rotation )
+
+        rotation.z = 15
+        cube.setRotationSmooth( rotation, false, false )
     end
 
     -- Hide all valid colors from the selector
@@ -1658,18 +1827,15 @@ function showColorSelect( pColor, colors )
         width = #colors * 450
     })
     cube.UI.show( "container" )
-
-    -- Show the color selector to a player
-    --UI.setAttributes( "colorSelectorBox", {
-        --visibility = pColor,
-        --width = #colors * 150
-    --})
-
-    --UI.show( "colorSelectorBox" )
 end
 
 -- [[ When a player selects the new playable color ]]
 function onColorSelect( player, value, id )
+    -- Check if player is allowed
+    if ( _G.playColorChange ~= player.color ) then
+        return
+    end
+
     -- Update cube
     local cube = getObjectFromGUID( _G.color_cube )
 
@@ -1689,6 +1855,7 @@ function setPlayingColor( newColors )
     if ( ( #newColors == 0 ) or ( #newColors > 2 ) ) then
         return
     end
+    -- Update middle tiles to card colors
     for c = 1, #colors do
         Wait.frames((function()
             local color = colors[c]
@@ -1733,22 +1900,34 @@ end
 -- Global Bools
 function uiUpdateBool( player, value, id )
     local val = _G[ id ]
-    if player.admin then
+    if player == nil or player.admin then
         val = ( value == "True" )
-        _G[ id ] = val
 
         local houseRules = {
-            houseStackDraws = "Stackable Draws",
-            houseChallenge = "Challenging",
-            houseRotate = "Rotate on 0's",
-            houseSwitch = "Switch on 7's",
-            houseJumpIn = "Card Jumping"
+            StackDraws = "Stackable Draws",
+            Challenge = "Challenging",
+            Rotate = "Rotate on 0's",
+            Switch = "Switch on 7's",
+            JumpIn = "Card Jumping"
         }
 
         local houseRule = houseRules[ id ]
         if houseRule ~= nil then
-            broadcastToAll( Players.Name( player ) .. " " .. ( val and "enabled" or "disabled" ) .. " house rule \"" .. houseRule .. "\"", ( val and color_green or color_red ) )
+
+            -- Update rule
+            _G.house[ id ] = val
+
+            -- Announce change
+            if player ~= nil then
+                broadcastToAll( Players.Name( player ) .. " " .. ( val and "enabled" or "disabled" ) .. " house rule \"" .. houseRule .. "\"", ( val and color_green or color_red ) )
+            end
+
+            -- Update notes accordingly
             houseRulesToNotes()
+
+        else
+            -- Update rule
+            _G[ id ] = val
         end
 
         -- Show or hide the UNO button
@@ -1767,19 +1946,19 @@ end
 function houseRulesToNotes()
     local output = ""
 
-    if houseStackDraws then
-        output = output .. "\nStackable draw"
-    end
-    if houseChallenge then
+    if _G.house.Challenge then
         output = output .. "\nChallenging"
     end
-    if houseJumpIn then
+    if _G.house.StackDraws then
+        output = output .. "\nStackable draw"
+    end
+    if _G.house.JumpIn then
         output = output .. "\nJumping In"
     end
-    if houseRotate then
+    if _G.house.Rotate then
         output = output .. "\nRotate on 0's"
     end
-    if houseSwitch then
+    if _G.house.Switch then
         output = output .. "\nSwitch on 7's"
     end
 
@@ -1791,6 +1970,7 @@ function uiUpdateInt( player, value, id )
     local val = _G[ id ]
     if player.admin then
         local val = tonumber( value )
+        value = tostring( val )
         _G[ id ] = val
     end
     UI.setAttributes( id, { text = value })
@@ -1849,6 +2029,15 @@ function callUno( player, value, id )
     end
 end
 
+function startsWith( needle, haystack )
+    local ndlLen = string.len( needle )
+    local hayLen = string.len( haystack )
+    if ( hayLen < ndlLen ) then
+        return false
+    end
+    return string.sub( haystack, 1, ndlLen ) == needle
+end
+
 function printToAllExcept( message, player_color, text_color )
     local players = Player.getPlayers()
     for _, player in ipairs( players ) do
@@ -1856,6 +2045,16 @@ function printToAllExcept( message, player_color, text_color )
             printToColor( message, player.color, text_color )
         end
     end
+end
+
+function getHost()
+    local list = Player.getPlayers()
+    for _, player in ipairs( list ) do
+        if player.host then
+            return player
+        end
+    end
+    return nil
 end
 
 function InArray( needle, haystack )
